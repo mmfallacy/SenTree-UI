@@ -1,0 +1,33 @@
+{
+    "name": "SenTree",
+    "version": "1.0.0",
+    "description": "User Interface for SenTree Receiver",
+    "main": "main.js",
+    "scripts": {
+        "start": "electron .",
+        "install": "electron-rebuild"
+    },
+    "keywords": [
+        "Tree",
+        "Sentry",
+        "Forest",
+        "Monitoring"
+    ],
+    "author": "Michael Angelo L. Monasterial",
+    "license": "CC0-1.0",
+    "devDependencies": {
+        "electron": "^5.0.5",
+        "electron-rebuild": "^1.8.5"
+    },
+    "dependencies": {
+        "@trodi/electron-splashscreen": "^0.3.4",
+        "chart.js": "^2.8.0",
+        "chartjs-plugin-annotation": "^0.5.7",
+        "data-table": "^2.0.0",
+        "exceljs": "^2.0.1",
+        "fs": "0.0.1-security",
+        "jquery": "^3.4.1",
+        "save": "^2.4.0",
+        "serialport": "^7.1.5"
+    }
+}

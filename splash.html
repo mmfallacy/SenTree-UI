@@ -1,0 +1,62 @@
+<html>
+<head>
+    
+    <style>
+        @font-face {
+            font-family:"Roboto";
+            src: url("resources/Roboto-Regular.ttf") format("truetype");
+        }
+        body{
+            margin:0;
+            padding:0;
+            height:200;
+            width:400;
+            background-color:#a3af5b;
+            display:flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+        }
+        .logo{
+            margin-top:3%;
+            height:70%;
+        }
+        @keyframes dots {
+            0%, 20% {
+                color: rgba(0,0,0,0);
+                text-shadow:
+                .25em 0 0 rgba(0,0,0,0),
+                .5em 0 0 rgba(0,0,0,0);}
+            40% {
+                color: #624a30;
+                text-shadow:
+                .25em 0 0 rgba(0,0,0,0),
+                .5em 0 0 rgba(0,0,0,0);}
+            60% {
+                text-shadow:
+                .25em 0 0 #624a30,
+                .5em 0 0 rgba(0,0,0,0);}
+            80%, 100% {
+                text-shadow:
+                .25em 0 0 #624a30,
+                .5em 0 0 #624a30;}
+            }
+        .dot{
+            margin:auto;
+            font-family:Roboto;
+            font-size: 100%;
+            color:#624a30;
+            font-weight: bold;
+
+        }
+        .dot:after{
+            content:" .";
+            animation: dots 3s steps(5, end) infinite;
+        }
+    </style>
+</head>
+<body>
+    <img src="resources/Logo.png" class="logo"/><br>
+    <span class="dot">Loading</span>
+</body>
+</html>

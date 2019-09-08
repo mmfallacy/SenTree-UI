@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html></html> 
+<script src="lib/Chart.js"></script>
+<script src="lib/chartjs-plugin-annotation.min.js"></script>
+<head>
+    <meta charset="UTF-8">
+    <title>SenTree</title>
+    <style>
+        @font-face {
+            font-family:"Roboto";
+            src: url("resources/Roboto-Regular.ttf") format("truetype");
+        }
+        @font-face {
+            font-family:"Roboto-Bold";
+            src: url("resources/RobotoCondensed-Regular.ttf") format("truetype");
+        }
+        body{
+            padding:0;
+            margin:0;
+            height:100%;
+            width:100%;
+        }
+        .topbar{
+            height:16vh;
+            background-color:#a3af5b;
+            display:flex;
+            vertical-align:middle;
+        }
+        .sidebar{
+            height:120vh;
+            width:20%;
+            background-color:#606E10;
+            float:left;
+            display:flex;
+            flex-direction:column;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .content-div{
+            height:120vh;
+            margin-left:20%;
+            width:80%;
+            background-color:#e6dfa1;
+        }
+        .logo{
+            margin:.25% 1%;
+            height:85%;
+        }
+        .layer{
+            display:flex;
+            justify-content: space-between;
+            margin-top:2%;
+            margin-left:3%;
+            width:94%;
+        }
+        .layer.a{
+            height:35%;
+        }
+        .layer.b{
+            height:54%;
+        }
+        .boardinfo{
+            display:flex;
+            flex-direction: column;
+            width:12%;
+            margin-right:10px;
+        }
+        .levelgraph{
+            width:83.5%;
+            border:5px solid #624a30;
+        }
+        .uptime{
+            height:47.5%;
+            width:100%;
+            border:5px solid #624a30;
+        }
+        .rssi{
+            height:47.5%;
+            width:100%;
+            margin-top:10%;
+            border:5px solid #624a30;
+        }
+        .placeholder{
+            height:50%;
+            background-color:#bdab78;
+            font-family:Roboto;
+            font-weight:bold;
+            display:flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+        .label{
+            height:50%;
+            background-color: #856541;
+            font-family:Roboto;
+            font-weight:bold;
+            display:flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+        .label>span{
+            text-align: center;
+            font-size:125%;
+            color:white;
+        }
+        .placeholder>span{
+            text-align: center;
+            font-size:300%;
+            color:black;
+            font-family: "Roboto-Bold";
+            font-weight: bolder;
+        }
+        .placeholder>span.unit{
+            text-align: center;
+            font-size:150%;
+            color:black;
+            font-family: "Roboto-Bold";
+            font-weight: bolder;
+            margin-top:-30%;
+        }
+        .pir-div{
+            display:flex;
+            flex-direction: column;
+            width:12%;
+            border:5px solid #624a30;
+        }
+        .pir-div .placeholder img{
+            height:93%;
+            width:78%;
+            margin-left:11%;
+        }
+        .graph-div{
+            width:40%;
+            border:5px solid #624a30;
+        }
+        .modal-background{
+            position:fixed;
+            left:0;
+            top:0;
+            z-index:0;
+            background-color: rgba(0,0,0,0.5);
+            height:100%;
+            width:100%;
+            display:none;
+        }
+        .modal-background>.content{
+            margin:15% 32.5%;
+            height:40%;
+            width:40%;
+            background-color:white;
+            display:flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+        }
+        .modal-background>.content>#errmsg{
+            font-family: "Roboto";
+            font-size:200%;
+            width:75%;
+            color:black;
+            text-align: center;
+        }
+        .setting-container {
+            background-color: #a3af5b;
+            width:85%;
+            padding: 5% 4%;
+        }
+        .setting-container.first{
+            margin-top: 10%;
+            display:flex;
+            align-items: center;
+            flex-direction: column;
+        }
+        .setting-container span{
+            font-family: Roboto;
+            font-size:100%;
+            font-weight: bold;
+        }
+        .setting-container input[type="text"]{
+            width:30%;
+            padding:1%;
+            text-align:center;
+            font-family: Roboto;
+            font-size:100%;
+        }
+        .setting-container.multiple .item{
+            display:flex;
+            justify-content: space-between
+        }
+        .setting-button{
+            margin:auto;
+            width:93%;
+            padding:5% 4%;
+            font-family: Roboto;
+            font-size:100%;
+            font-weight: bold;
+        }
+        .dropdown{
+            padding:1%;
+            margin-top:-5%;
+            font-family: Roboto;
+            font-size:100%;
+        }
+    </style>   
+</head>
+ 
+<body>
+    <div class="topbar"><img class="logo" src="resources\Logo.png"/></div>
+    <div class="sidebar">
+        <div class="setting-container first">
+            <span class="setting-label">Logging Frequency</span><br>
+            <select class="dropdown" id="dropdown">
+                <option value="1">Every 5 seconds</option>
+                <option value="6">Every 30 seconds</option>
+                <option value="12">Every Minute</option>
+                <option value="60">Every 5 Minutes</option>
+                <option value="120">Every 10 Minutes</option>
+                <option value="360">Every 30 Minutes</option>
+                <option value="720">Every Hour</option>
+            </select>
+        </div>
+        <div class="setting-container multiple">
+            <div class="item">
+                <span class="setting-label">LPG Limit:</span>
+                <input type="text" id="lpg-limit"/>
+            </div>
+            <div class="item">
+                    <span class="setting-label">CO Limit:</span>
+                    <input type="text" id="co-limit"/>
+            </div>
+            <div class="item">
+                    <span class="setting-label">Temp Limit:</span>
+                    <input type="text" id="temp-limit"/>
+            </div>
+        </div>
+        <div style="width:100%; display:flex; flex-direction: column; align-items: center; margin-bottom:5%;">
+            <div class="setting-container">
+                <span class="setting-label">Sound Alert:</span>
+                <input type="checkbox" id="sound-status" checked/>
+            </div>
+            <button id="saveSettings" class="setting-button" onclick="saveSettings();"> Save Settings </button>
+        </div>
+    </div>
+    <div class="content-div"><br>
+        <div class="layer a">
+            <div class="graph-div">
+                <div class="placeholder" style="height:80%;"><canvas style="margin-top:2%;height:85%;width:90%;" id="lpg-chart"></canvas></div>
+                <div class="label" style="height:20%"><span style="font-size: 100%;">LPG Concentration</span></div>
+            </div>
+            <div class="graph-div">
+                    <div class="placeholder" style="height:80%;"><canvas style="margin-top:2%;height:85%;width:90%;" id="co-chart"></canvas></div>
+                    <div class="label" style="height:20%"><span style="font-size: 100%;">Carbon Monoxide Concentration</span></div>
+                </div>
+            <div class="pir-div">
+                <div class="placeholder" style="height:80%;"><img class="pir-logo" id="pir-ind" src="resources/human-logo.png"/></div>
+                <div class="label" style="height:20%"><span style="font-size: 100%;">Human Presence</span></div>
+            </div>
+        </div>
+        <div class="layer b">
+            <div class="levelgraph">
+                    <div class="placeholder" style="height:90%;"><canvas style="margin-top:2%;height:85%;width:90%;" id="temp-chart"></canvas></div>
+                    <div class="label" style="height:10%"><span style="font-size: 100%;">Temperature</span></div>
+            </div>
+            <div class="boardinfo">
+                <div class="uptime">
+                    <div class="placeholder"><span id="millis-ind">0</span><span id="millis-ind-unit"class="unit">ms</span></div>
+                    <div class="label"><span>Board Uptime</span></div>
+                </div>
+                <div class="rssi">
+                        <div class="placeholder"><span id="rssi-ind">0</span><span class="unit">dBm</span></div>
+                        <div class="label"><span>Signal Strength</span></div>
+                </div>                
+            </div>
+        </div>
+    </div>
+    <div class="modal-background" id="modal">
+        <div class="content">
+            <span id="errmsg"></span>
+        </div>
+    </div>
+</body>
+<script>
+        Chart.defaults.global.defaultFontColor = '#856541';
+        Chart.defaults.global.defaultFontFamily = 'Segoe UI';
+        Chart.defaults.global.defaultFontSize = 16;
+        const SerialPort = require('serialport');
+        const Readline = require('@serialport/parser-readline');
+        const fs = require("fs");
+        var Excel= require("exceljs");
+        const path = require('path')
+        window.$ = window.jQuery = require('jquery');
+
+        var lpg = document.getElementById('lpg-chart');
+        var co = document.getElementById('co-chart');
+        var temp = document.getElementById('temp-chart');
+        var lpgCounter = 1;
+        var coCounter =1;
+        var CONFIG_OBJ= JSON.parse(fs.readFileSync('config.json'));
+        var tempDirections = ["Front","Left","Right","Bottom"];
+        var lpgChart = new Chart(lpg, {
+            type: 'line',
+            data: {
+                labels:[0],
+                datasets: [{
+                    data: [0],
+                    borderColor:"#606E10",
+                    pointBorderColor:"#606E10",
+                    backgroundColor:"transparent",
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                title:{
+                    display:true
+                },
+                scales: {
+                    yAxes: [{
+                        ticks:{
+                            beginAtZero: true,
+                            suggestedMin:5
+                        }
+                    }],
+                    xAxes: [{
+                        scaleLabel:{
+                            display:true
+                        }
+                    }]
+                },
+                elements: {
+                    line: {
+                        tension: 0 
+                    }
+                },
+                legend:{
+                    display:false
+                },
+                annotation: {
+                    annotations: [{
+                        type: 'line',
+                        id:'limit',
+                        mode: 'horizontal',
+                        scaleID: 'y-axis-0',
+                        value: CONFIG_OBJ["lpgLimit"],
+                        borderColor: 'red',
+                        borderWidth: 1
+                    }],
+                    drawTime: "afterDraw"
+                }
+            }
+        });
+        var coChart = new Chart(co, {
+            type: 'line',
+            data: {
+                labels:[0],
+                datasets: [{
+                    data: [0],
+                    borderColor:"#606E10",
+                    pointBorderColor:"#606E10",
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                title:{
+                    display:true
+                },
+                scales: {
+                    yAxes: [{
+                        ticks:{
+                            beginAtZero: true,
+                            suggestedMin:5
+                        }
+                    }],
+                    xAxes: [{
+                        scaleLabel:{
+                            display:true
+                        }
+                    }]
+                },
+                elements: {
+                    line: {
+                        tension: 0
+                    }
+                },
+                legend:{
+                    display:false
+                },
+                annotation: {
+                    annotations: [{
+                        type: 'line',
+                        id:'limit',
+                        mode: 'horizontal',
+                        scaleID: 'y-axis-0',
+                        value: CONFIG_OBJ["coLimit"],
+                        borderColor: 'red',
+                        borderWidth: 1
+                    }],
+                    drawTime: "afterDraw"
+                }
+            }
+        });
+        var tempChart = new Chart(temp, {
+            type: 'bar',
+            data: {
+                labels:tempDirections,
+                datasets: [{
+                    borderColor:"#ff7034",
+                    backgroundColor:"#ff7034",
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    yAxes: [{
+                        ticks:{
+                            beginAtZero: true,
+                            suggestedMax:60,
+                            stepSize:10
+                        }
+                    }],
+                    xAxes: [{
+                        ticks:{
+                            barPercentage:0.5
+                        }
+                    }]
+                },
+                legend:{
+                    display:false
+                },
+                annotation: {
+                    annotations: [{
+                        type: 'line',
+                        id:'limit',
+                        mode: 'horizontal',
+                        scaleID: 'y-axis-0',
+                        value: CONFIG_OBJ["tempLimit"],
+                        borderColor: 'red',
+                        borderWidth: 1
+                    }],
+                    drawTime: "afterDraw"
+                }
+            }
+        });
+        var SENTREE_PORT;
+        var CON_STATUS=false;
+        var MSG_NEW=false;
+        var recon;
+        var SOUND_STATUS = CONFIG_OBJ["soundStat"];
+        var audio = new Audio('alert.wav');
+        var prevPIR;
+        var LOG_FREQ=CONFIG_OBJ["logFreq"];
+        var storedLog=[];
+        var LOG_TIMES=0;
+        var CURSOR=5;
+        setInterval(()=>{
+            if (!CON_STATUS){
+                restartPort();
+            }
+            else if(!MSG_NEW){
+                CON_STATUS=false
+                $("#errmsg").text("Disconnected to SenTree Device! Awaiting for reconnection...")
+                $("#modal").fadeIn("slow");
+            }
+            else if (CON_STATUS){
+                $("#modal").fadeOut("slow");
+            }
+        },10000);
+        
+        SerialPort.list(function (err, ports) {
+            ports.forEach(function(port) {
+                if(port.manufacturer.includes("Prolific")){
+                SENTREE_PORT = port.comName.toString();
+                }
+            });
+            if(!SENTREE_PORT){
+                $("#errmsg").text("Cannot Find SenTree Receiver! Awaiting for reconnection...")
+                $("#modal").fadeIn("slow");
+                recon = setInterval(restartPort,3000);
+            }
+            var port = new SerialPort(SENTREE_PORT, {
+                baudRate: 9600
+            });
+
+            listenSenTree(port);
+            
+        });
+        $(window).on('load',()=>{
+            $("#lpg-limit").val(CONFIG_OBJ["lpgLimit"]);
+            $("#co-limit").val(CONFIG_OBJ["coLimit"]);
+            $("#temp-limit").val(CONFIG_OBJ["tempLimit"]);
+            $("#dropdown").val(CONFIG_OBJ["logFreq"]);
+            $("#sound-status").prop("checked",CONFIG_OBJ["soundStat"]);
+
+        });
+        function saveSettings(){
+            fs.writeFile("config.json", JSON.stringify(CONFIG_OBJ),(err)=>{
+                if(!err){
+                    err="Successfully saved current settings";
+                }
+                $("#errmsg").text(err);
+                $("#modal").fadeIn("slow");
+                setTimeout(()=>{$("#modal").fadeOut("slow");},1000);
+            });
+
+        }
+        function saveLog(){
+            let CURRENT_WB = CONFIG_OBJ["currentWorkbook"];
+            let LOG_DATE = new Date();
+            let LOG_DATE_SHORT = LOG_DATE.getDate() + "-" + LOG_DATE.getMonth()+1 + "-" + LOG_DATE.getFullYear();
+            let WORKBOOK_CAP = 720/LOG_FREQ;
+            if(CURRENT_WB){
+                const wb = new Excel.Workbook();
+                wb.xlsx.readFile(path.join(__dirname,"logs",CURRENT_WB)).then(()=>{
+                    const log_ws = wb.getWorksheet(CURRENT_WS,{properties:{defaultRowHeight:23}});
+                    let ws_title = CURRENT_WS;
+                    updateLogSensorValue(log_ws);                    
+                    CURSOR++;
+                    LOG_TIMES++;
+                    CURRENT_WS=ws_title;
+                    CONFIG_OBJ["currentWorkbook"] = "STL-"+LOG_DATE_SHORT+".xlsx"
+                    wb.xlsx.writeFile(path.join(__dirname,"logs","STL-"+LOG_DATE_SHORT+".xlsx")).then(()=>{
+                        console.log("Updated Log!",CURSOR); 
+                        delete storedLog;
+                        storedLog=[];                                  
+                    });
+                });
+            }
+            else {
+                const wb = new Excel.Workbook();
+                wb.creator = "SenTree";
+                wb.created = LOG_DATE;
+                // INFORMATION WORKSHEET
+                const info_ws = wb.addWorksheet("Information",{properties:{defaultRowHeight:23,tabColor:{argb:'FF32a836'}}});
+                info_ws.getCell("B2").value = "AUTHOR:";
+                info_ws.getCell("C2").value = "SenTree";
+                info_ws.getCell("B3").value ="CREATED:";
+                info_ws.getCell("C3").value =LOG_DATE_SHORT;
+                //LOG WORKSHEET
+                let ws_title = "HOUR " + LOG_DATE.getHours()
+                const log_ws = wb.addWorksheet(ws_title,{properties:{defaultRowHeight:23}});
+                    // creating table header;
+                    log_ws.mergeCells("B2:B4");
+                    log_ws.mergeCells("C2:I2");
+                    log_ws.mergeCells("C3:C4");
+                    log_ws.mergeCells("D3:D4");
+                    log_ws.mergeCells("E3:H3");
+                    log_ws.mergeCells("I3:I4");
+                    log_ws.getColumn("B").width=27;
+                    for(i=3;i<10;i++) log_ws.getColumn(i).width=13;
+                    for(i=2;i<10;i++){
+                        log_ws.getColumn(i).font={name:"Courier New"};
+                        log_ws.getColumn(i).alignment={vertical:"middle",horizontal:"center"};
+                        log_ws.getColumn(i).border={top: {style:'thin'},
+                                                    left: {style:'thin'},
+                                                    bottom: {style:'thin'},
+                                                    right: {style:'thin'}}
+                    }
+                    log_ws.getRow(0).border={left: {style:"hair"},
+                                            right: {style:"hair"}};
+                    for(i=2;i<5;i++) log_ws.getRow(i).font={name:"Century Gothic"};
+
+                    log_ws.getCell("B2").value = "TIMESTAMP";
+                    log_ws.getCell("B2").fill = {fgColor:{argb:"FF000000"}};
+                    log_ws.getCell("C2").value = "SENSOR VALUES";
+                    log_ws.getCell("C3").value = "LPG";
+                    log_ws.getCell("D3").value = "CO";
+                    log_ws.getCell("E3").value = "MLX";
+                        log_ws.getCell("E4").value = "FRONT"; 
+                        log_ws.getCell("F4").value = "LEFT";                        
+                        log_ws.getCell("G4").value = "RIGHT";                        
+                        log_ws.getCell("H4").value = "BOTTOM";                        
+                    log_ws.getCell("I3").value = "PIR";
+                    updateLogSensorValue(log_ws);
+                    CURSOR++;
+                    LOG_TIMES++;
+                    CURRENT_WS=ws_title;
+                    CONFIG_OBJ["currentWorkbook"] = "STL-"+LOG_DATE_SHORT+".xlsx"
+                wb.xlsx.writeFile(path.join(__dirname,"logs","STL-"+LOG_DATE_SHORT+".xlsx")).then(()=>{
+                    console.log("Saved Log!");           
+                    delete storedLog;
+                    storedLog=[];                 
+                });
+            }
+            WORKBOOK_CAP = 720/LOG_FREQ;
+        }
+        function updateLogSensorValue(ws){
+            let y;
+            for(i in storedLog){
+                y = parseInt(i)+CURSOR;
+                ws.getCell("B"+y).value = storedLog[i]["TIME"];
+                ws.getCell("C"+y).value = parseFloat(storedLog[i]["SENSOR VALUES"]);
+                ws.getCell("C"+y).value = parseFloat(storedLog[i]["MQ6"]);
+                ws.getCell("D"+y).value = parseFloat(storedLog[i]["MQ7"]);
+                    ws.getCell("E"+y).value = parseFloat(storedLog[i]["MLX"][0]); 
+                    ws.getCell("F"+y).value = parseFloat(storedLog[i]["MLX"][1]);            
+                    ws.getCell("G"+y).value = parseFloat(storedLog[i]["MLX"][2]);            
+                    ws.getCell("H"+y).value = parseFloat(storedLog[i]["MLX"][3]);                        
+                ws.getCell("I"+y).value = parseFloat(storedLog[i]["PIR"]);
+            }
+            CURSOR=y;        
+        }
+        function listenSenTree(port){
+            const parser = port.pipe(new Readline({ delimiter: '\n' }));
+            port.on("open", () => {
+                $("#errmsg").text("Successfully Connected to SenTree Receiver on "+SENTREE_PORT);
+                $("#modal").fadeIn("slow");
+                setTimeout(()=>{$("#modal").fadeOut("slow");},5000);
+            });
+            parser.on('data', data =>{
+            let parsedData = parseSenTreeData(data);
+            parsedData["MQ6"] = Math.floor(Math.pow(parsedData["MQ6"]/20,2));
+            if("MSG" in parsedData){
+                console.log(parsedData["MSG"]);
+            }   
+            else{
+                if(!CON_STATUS){
+                    $("#errmsg").text("SenTree Receiver successfully connected to SenTree Device");
+                    $("#modal").fadeIn("slow");
+                    setTimeout(()=>{$("#modal").fadeOut("slow");},1000);
+                    CON_STATUS=true;
+                }
+                MSG_NEW=true;
+                setTimeout(()=>{MSG_NEW=false;},4989);
+                for(i in parsedData){
+                    let hash={'MQ6':"lpgLimit",'MQ7':"coLimit",'MLX':"tempLimit"}
+                    if(parsedData[i]>=CONFIG_OBJ[hash[i]] && i!="MLX" && i!="PIR"){
+                        if(SOUND_STATUS) audio.play();                   
+                        $("#errmsg").text(i + " reading is above the limit!");
+                        $("#modal").fadeIn("slow");
+                        setTimeout(()=>{$("#modal").fadeOut("slow");},1000);
+                    }
+                    else if(i==="MLX"){
+                        for(mlxtemp in parsedData[i]){
+                            if(parsedData[i][mlxtemp]>=CONFIG_OBJ[hash[i]]){
+                                if(SOUND_STATUS) audio.play();
+                                $("#errmsg").text(tempDirections[mlxtemp]+" "+i + " reading is above the limit!");
+                                $("#modal").fadeIn("slow");
+                                setTimeout(()=>{$("#modal").fadeOut("slow");},1000);
+                            }
+                        }
+                    }
+                    else if(i==="PIR"){
+                        if(parsedData[i]==1 && parsedData[i]!=prevPIR) {
+                            if(SOUND_STATUS) audio.play();                 
+                            $("#errmsg").text("Human Presence is detected!");
+                            $("#modal").fadeIn("slow");
+                            setTimeout(()=>{$("#modal").fadeOut("slow");},1000);
+                        }
+                    }
+
+                }
+                let TIMESTAMP = parseTime(parsedData["MILLIS"]);
+                updateChart(lpgChart,TIMESTAMP,parsedData["MQ6"]);
+                updateChart(coChart,TIMESTAMP,parsedData["MQ7"]);
+                updatePIR(parsedData["PIR"]);
+                for(i in parsedData["MLX"]){
+                    updateTempChart(tempChart,i,parsedData["MLX"][i]);
+                }
+                updateRSSI(parsedData["RSSI"]);
+                updateTime(parsedData["MILLIS"]);
+                parsedData["TIME"]=TIMESTAMP[1]+":"+TIMESTAMP[0];
+                storedLog.push(parsedData);
+                if(storedLog.length>=LOG_FREQ){
+                    saveLog();
+                }
+                prevPIR=parsedData["PIR"];
+            }
+            });
+        }
+
+        $("#lpg-limit").on("input propertychange paste",()=>{
+            let value = parseInt($('#lpg-limit').val());
+            if(value.isNaN){
+                $("#errmsg").text("Invalid character: Input is not a Number!");
+                $("#modal").fadeIn("slow");
+                setTimeout(()=>{$("#modal").fadeOut("slow");},1000);
+                return;
+            }
+            lpgChart.annotation.elements['limit'].options.value = value;
+            CONFIG_OBJ["lpgLimit"]=value;
+            lpgChart.update();
+        });
+        $("#dropdown").on("input propertychange",()=>{
+            let value = parseInt($('#dropdown').val());
+            CONFIG_OBJ["logFreq"]=value;
+            $("#errmsg").text("Please Save Settings and Restart UI for changes to take effect!");
+            $("#modal").fadeIn("slow");
+            setTimeout(()=>{$("#modal").fadeOut("slow");},1000);
+        });
+        $('#sound-status'). click(function(){
+            let value;
+            if($(this).prop("checked")){
+                value=true;
+            }
+            else if(!$(this).prop("checked")){
+                value=false
+            }
+            SOUND_STATUS=value
+            CONFIG_OBJ["soundStat"]=value;
+        });
+        $("#co-limit").on("input propertychange paste",()=>{
+            let value = parseInt($('#co-limit').val());
+            if(value.isNaN){
+                $("#errmsg").text("Invalid character: Input is not a Number!");
+                $("#modal").fadeIn("slow");
+                setTimeout(()=>{$("#modal").fadeOut("slow");},1000);
+                return;
+            }
+            coChart.annotation.elements['limit'].options.value = value;
+            CONFIG_OBJ["coLimit"]=value;
+            coChart.update();
+        });
+        $("#temp-limit").on("input propertychange paste",()=>{
+            let value = parseInt($('#temp-limit').val());
+            if(value.isNaN){
+                $("#errmsg").text("Invalid character: Input is not a Number!");
+                $("#modal").fadeIn("slow");
+                setTimeout(()=>{$("#modal").fadeOut("slow");},1000);
+                return;
+            }
+            tempChart.annotation.elements['limit'].options.value = value;
+            CONFIG_OBJ["tempLimit"]=value;
+            tempChart.update();
+        });
+        function restartPort(){
+            SerialPort.list(function (err, ports) {
+            ports.forEach(function(port) {
+                if(port.manufacturer.includes("Prolific")){
+                SENTREE_PORT = port.comName.toString();
+                }
+            });
+            port = new SerialPort(SENTREE_PORT, {
+                baudRate: 9600
+            });
+            if(SENTREE_PORT){
+                clearInterval(recon);
+            }
+            listenSenTree(port);
+            });
+        }
+        function parseSenTreeData(data){
+            let dataX=data.split(";");
+            let parsedData = {};
+            for(i in dataX){
+                let key = dataX[i].split("=")[0]
+                let value = dataX[i].split("=")[1]
+                if(key=="MLX"){
+                    value = value.split(",");
+                }
+                if(key=="MILLIS"){
+                    value = parseInt(value);
+                }
+                parsedData[key]=value;
+            }
+            return parsedData;
+        }
+        function parseTime(millis){
+            let seconds = Math.floor(millis/1000)%60;
+            let time = new Date().getTime();
+            let date = new Date(time);
+            let hr = date.getHours();
+            let min = date.getMinutes();
+            let month = date.getMonth()+1;
+            let day = date.getDate();
+            let year = date.getFullYear();
+            let parsedDate = year+"/"+month+"/"+day+" "+hr+":"+min;
+            return [seconds,parsedDate] 
+        }
+        function updateTime(millis){
+            let timeObj = convertMS(millis);
+            let text,unit;
+            for(key in timeObj){
+                if(timeObj[key]){
+                    text=timeObj[key];
+                    unit=key;
+                    if(text>1) unit+="s";
+                    break;
+                }
+            }
+            $("#millis-ind").text(text);
+            $("#millis-ind-unit").text(unit);
+
+        }
+        function convertMS( milliseconds ){
+            //SNIPPET:https://gist.github.com/Erichain/6d2c2bf16fe01edfcffa
+            var day, hour, minute, seconds;
+            seconds = Math.floor(milliseconds / 1000);
+            minute = Math.floor(seconds / 60);
+            seconds = seconds % 60;
+            hour = Math.floor(minute / 60);
+            minute = minute % 60;
+            day = Math.floor(hour / 24);
+            hour = hour % 24;
+            return {
+                day: day,
+                hour: hour,
+                minute: minute,
+                second: seconds
+            };
+        }
+        function updateChart(chart,time,data){
+            label = time[0];
+            chart.options.scales.xAxes[0].scaleLabel.labelString = time[1];
+            chart.data.labels.push(label);
+            chart.data.datasets[0].data.push(data);
+            if(chart.data.labels.length>12){
+                chart.data.labels.shift();
+                chart.data.datasets[0].data.shift();
+            }
+            chart.update();
+        }
+        function updateTempChart(chart,index,data){
+            chart.data.datasets[0].data[index] = data;
+            chart.update();
+        }
+        function updatePIR(value){
+            if(value=="1")
+                $("#pir-ind").css("filter","invert(53%) sepia(42%) saturate(2252%) hue-rotate(337deg) brightness(101%) contrast(104%)");
+            else if(value=="0") 
+                $("#pir-ind").css("filter","none");
+        }
+        function updateRSSI(value){
+            $("#rssi-ind").text(value);
+        }
+</script>
+</html>
